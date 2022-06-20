@@ -43,7 +43,7 @@ int arrivedcount = 0;
 // Flag indicating that button is not pressed:
 int button_pressed=0;
 // HiveMQ broker connectivity information:
-const char* hostname = "broker.mqttdashboard.com";
+const char* hostname = "broker.hivemq.com";
 int port = 1883;
 // Returning a string for a provided network encryption: 
  
@@ -104,7 +104,7 @@ int main()
     if ((rc = client.connect(data)) != 0)
         printf("rc from MQTT connect is %d\n", rc);
  
-    if ((rc = client.subscribe(topic_sub, MQTT::QOS2, messageArrived)) != 0)
+    if ((rc = client.subscribe(topic_sub, MQTT::QOS0, messageArrived)) != 0)
         printf("rc from MQTT subscribe is %d\n", rc);
       
     while (true) {
@@ -200,8 +200,7 @@ void messageArrived(MQTT::MessageData& md)
     ++arrivedcount;
 }
  
-void buttonFunction() {
-    
+void buttonFunction() 
+{
     button_pressed=1;
-   
 }           
