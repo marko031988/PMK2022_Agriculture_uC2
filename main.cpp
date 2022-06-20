@@ -16,7 +16,7 @@
 // Small delay for network information printing:
 #define PRINTF_DELAY_MS                                                       10
  
- 
+// Global Variables 
 // Left potentiometer:
 AnalogIn pot1(MB_POT1);
 // Left button on the motherboard:
@@ -35,7 +35,7 @@ TLSSocket tlsSocket;
 MQTTClient client(&socket);
 // Message handler:
 MQTT::Message message;
- 
+ //Topics
 char* topic = "test/Pavle/Pot1";
 char* topic_sub = "test/Olja/Pot1";
 // Counter of arrived messages:
@@ -46,6 +46,88 @@ int button_pressed=0;
 const char* hostname = "broker.mqttdashboard.com";
 int port = 1883;
 // Returning a string for a provided network encryption: 
+ 
+ 
+//Global Functions
+ const char *sec2str(nsapi_security_t sec);
+ int scan_networks(WiFiInterface *wifi);
+ void messageArrived(MQTT::MessageData& md);
+ void buttonFunction();
+ 
+int main()
+{
+    led1 = 0;
+    // Set the interrupt event:
+    sw1.fall(&buttonFunction); 
+    
+    // Create a default network interface:
+    wifi = WiFiInterface::get_default_instance();
+    if (!wifi) {
+        printf("ERROR: No WiFiInterface found.\n");
+        return -1;
+    }
+    
+    // Scan for available networks and aquire information about Access Points:
+    int count = scan_networks(wifi);
+    if (count == 0) {
+        printf("No WIFI APs found - can't continue further.\n");
+        return -1;
+    }
+    
+    // Connect to the network with the parameters specified in 'mbed_app.json':
+    printf("\nConnecting to %s...\n", MBED_CONF_APP_WIFI_SSID);
+    int ret = wifi->connect(MBED_CONF_APP_WIFI_SSID, MBED_CONF_APP_WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2);
+    if (ret != 0) {
+        printf("\nConnection error: %d\n", ret);
+        return -1;
+    }
+    
+    // Print out the information aquired:
+    printf("Success\n\n");
+    printf("MAC: %s\n", wifi->get_mac_address());
+    printf("IP: %s\n", wifi->get_ip_address());
+    printf("Netmask: %s\n", wifi->get_netmask());
+    printf("Gateway: %s\n", wifi->get_gateway());
+    printf("RSSI: %d\n\n", wifi->get_rssi());   
+    
+    // Open TCP socket using WiFi network interface:
+    socket.open(wifi);
+    // Connect to the HiveMQ broker:
+    socket.connect(hostname, port);
+    // Fill connect data with default values:
+    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+    // Change only ID and protocol version:
+    data.MQTTVersion = 3;
+    data.clientID.cstring = "NUCLEO-L476RG-64";
+    // Connect the 
+    int rc = 0;
+    if ((rc = client.connect(data)) != 0)
+        printf("rc from MQTT connect is %d\n", rc);
+ 
+    if ((rc = client.subscribe(topic_sub, MQTT::QOS2, messageArrived)) != 0)
+        printf("rc from MQTT subscribe is %d\n", rc);
+      
+    while (true) {
+        // Show that the loop is running by switching motherboard LED2:
+        led2 = !led2;
+        thread_sleep_for(BLINKING_RATE_MS);
+        if (button_pressed==1) {
+            button_pressed=0;      
+            // QoS 0
+            char buf[100];
+            sprintf(buf, "V(POT1) = %1.2f\r\n", pot1*VOLTAGE_SCALER);
+            message.qos = MQTT::QOS0;
+            message.retained = false;
+            message.dup = false;
+            message.payload = (void*)buf;
+            message.payloadlen = strlen(buf)+1;
+            client.publish(topic, message);
+        }
+        // Need to call yield API to maintain connection:
+        client.yield(YIELD_TIMEOUT_MS);
+    }
+}
+
 const char *sec2str(nsapi_security_t sec)
 {
     switch (sec) 
@@ -122,79 +204,4 @@ void buttonFunction() {
     
     button_pressed=1;
    
-}
- 
-int main()
-{
-    led1 = 1;
-    // Set the interrupt event:
-    sw1.fall(&buttonFunction); 
-    
-    // Create a default network interface:
-    wifi = WiFiInterface::get_default_instance();
-    if (!wifi) {
-        printf("ERROR: No WiFiInterface found.\n");
-        return -1;
-    }
-    
-    // Scan for available networks and aquire information about Access Points:
-    int count = scan_networks(wifi);
-    if (count == 0) {
-        printf("No WIFI APs found - can't continue further.\n");
-        return -1;
-    }
-    
-    // Connect to the network with the parameters specified in 'mbed_app.json':
-    printf("\nConnecting to %s...\n", MBED_CONF_APP_WIFI_SSID);
-    int ret = wifi->connect(MBED_CONF_APP_WIFI_SSID, MBED_CONF_APP_WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2);
-    if (ret != 0) {
-        printf("\nConnection error: %d\n", ret);
-        return -1;
-    }
-    
-    // Print out the information aquired:
-    printf("Success\n\n");
-    printf("MAC: %s\n", wifi->get_mac_address());
-    printf("IP: %s\n", wifi->get_ip_address());
-    printf("Netmask: %s\n", wifi->get_netmask());
-    printf("Gateway: %s\n", wifi->get_gateway());
-    printf("RSSI: %d\n\n", wifi->get_rssi());   
-    
-    // Open TCP socket using WiFi network interface:
-    socket.open(wifi);
-    // Connect to the HiveMQ broker:
-    socket.connect(hostname, port);
-    // Fill connect data with default values:
-    MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
-    // Change only ID and protocol version:
-    data.MQTTVersion = 3;
-    data.clientID.cstring = "NUCLEO-L476RG-64";
-    // Connect the 
-    int rc = 0;
-    if ((rc = client.connect(data)) != 0)
-        printf("rc from MQTT connect is %d\n", rc);
- 
-    if ((rc = client.subscribe(topic_sub, MQTT::QOS2, messageArrived)) != 0)
-        printf("rc from MQTT subscribe is %d\n", rc);
-      
-    while (true) {
-        // Show that the loop is running by switching motherboard LED2:
-        led2 = !led2;
-        thread_sleep_for(BLINKING_RATE_MS);
-        if (button_pressed==1) {
-            button_pressed=0;      
-            // QoS 0
-            char buf[100];
-            sprintf(buf, "V(POT1) = %1.2f\r\n", pot1*VOLTAGE_SCALER);
-            message.qos = MQTT::QOS0;
-            message.retained = false;
-            message.dup = false;
-            message.payload = (void*)buf;
-            message.payloadlen = strlen(buf)+1;
-            client.publish(topic, message);
-        }
-        // Need to call yield API to maintain connection:
-        client.yield(YIELD_TIMEOUT_MS);
-    }
-}
-            
+}           
