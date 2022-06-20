@@ -21,6 +21,8 @@
 AnalogIn pot1(MB_POT1);
 // Left button on the motherboard:
 InterruptIn sw1(MB_SW1);
+// LEFT LED on the motherboard:
+DigitalOut led1(MB_LED1);
 // Right LED on the motherboard:
 DigitalOut led2(MB_LED2);
 // Pointer to a WiFi network object:
@@ -34,8 +36,8 @@ MQTTClient client(&socket);
 // Message handler:
 MQTT::Message message;
  
-char* topic = "mbed-sample-pub";
-char* topic_sub = "mbed-sample-sub";
+char* topic = "test/Pavle/Pot1";
+char* topic_sub = "test/Olja/Pot1";
 // Counter of arrived messages:
 int arrivedcount = 0;
 // Flag indicating that button is not pressed:
@@ -124,8 +126,9 @@ void buttonFunction() {
  
 int main()
 {
+    led1 = 1;
     // Set the interrupt event:
-    sw1.rise(&buttonFunction); 
+    sw1.fall(&buttonFunction); 
     
     // Create a default network interface:
     wifi = WiFiInterface::get_default_instance();
