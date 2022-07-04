@@ -3,6 +3,9 @@
 #include "mb_pins.h"
 #include "platform/mbed_thread.h"
 #include "MQTTClientMbedOs.h"
+#include "Adafruit_GFX.h"
+#include "Adafruit_GFX_Config.h"
+#include "Adafruit_SSD1306.h"
  
  
 // LED2 blinking rate:
@@ -15,10 +18,24 @@
 #define MAX_NETWORKS                                                          15
 // Small delay for network information printing:
 #define PRINTF_DELAY_MS                                                       10
- 
+// Set OLED width and heigth [pixel]:
+#define OLED_WIDTH_PX                                                        128
+#define OLED_HEIGHT_PX                                                        64
+// Address of OLED display:
+#define I2C_ADDRESS                                                      0x3c<<1
+// Half of the potentiometer return value: 
+#define HALF_INTERVAL                                                       0.5f
+// I2C frequency:
+#define I2C_FREQUENCY                                                     400000
+
 // Global Variables 
-// Left potentiometer:
+//I2C
+I2C i2c(MB_OLED_SDA, MB_OLED_SCL);
+//OLED
+Adafruit_SSD1306_I2c myOled(i2c,PB_5,I2C_ADDRESS,OLED_HEIGHT_PX,OLED_WIDTH_PX);
+// Potentiometers:
 AnalogIn pot1(MB_POT1);
+AnalogIn pot2(MB_POT2);
 // Left button on the motherboard:
 InterruptIn sw1(MB_SW1);
 // LEFT LED on the motherboard:
@@ -38,10 +55,11 @@ MQTT::Message message;
  //Topics
 char* topic = "test/Pavle/Pot1";
 char* topic_sub = "test/Olja/Pot1";
+char* topic_sub_notifications = "agriculture/display";
 // Counter of arrived messages:
 int arrivedcount = 0;
 // Flag indicating that button is not pressed:
-int button_pressed=0;
+int button_pressed = 0;
 // HiveMQ broker connectivity information:
 const char* hostname = "broker.hivemq.com";
 int port = 1883;
@@ -56,9 +74,15 @@ int port = 1883;
  
 int main()
 {
+    //Turn off left led
     led1 = 0;
+    
     // Set the interrupt event:
     sw1.fall(&buttonFunction); 
+    
+    // Initialize OLED:
+    myOled.begin();
+    int x, y = 0;
     
     // Create a default network interface:
     wifi = WiFiInterface::get_default_instance();
@@ -110,7 +134,6 @@ int main()
     while (true) {
         // Show that the loop is running by switching motherboard LED2:
         led2 = !led2;
-        thread_sleep_for(BLINKING_RATE_MS);
         if (button_pressed==1) {
             button_pressed=0;      
             // QoS 0
@@ -125,6 +148,15 @@ int main()
         }
         // Need to call yield API to maintain connection:
         client.yield(YIELD_TIMEOUT_MS);
+        
+        // text display tests
+        myOled.setTextSize(2);
+        myOled.setTextColor(WHITE);
+        myOled.setTextCursor(0,0);
+        myOled.printf("Hello,    Olja!");
+        myOled.display();
+        thread_sleep_for(BLINKING_RATE_MS);
+        myOled.clearDisplay();
     }
 }
 
