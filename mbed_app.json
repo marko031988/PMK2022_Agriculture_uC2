@@ -2,11 +2,11 @@
     "config": {
         "wifi-ssid": {
             "help": "WIFI SSID",
-            "value": "\"MAESTRO\""
+            "value": "\"Kupus\""
         },
         "wifi-password": {
             "help": "Wifi Password",
-            "value": "\"matish998\""
+            "value": "\"dinarska1\""
         }
     },
     "target_overrides": {

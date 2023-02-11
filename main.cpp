@@ -6,7 +6,7 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_GFX_Config.h"
 #include "Adafruit_SSD1306.h"
- 
+#include "string.h"
  
 // LED2 blinking rate:
 #define BLINKING_RATE_MS                                                     250
@@ -27,6 +27,8 @@
 #define HALF_INTERVAL                                                       0.5f
 // I2C frequency:
 #define I2C_FREQUENCY                                                     400000
+// Blinking rate in milliseconds
+
 
 // Global Variables 
 //I2C
@@ -122,7 +124,7 @@ int main()
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     // Change only ID and protocol version:
     data.MQTTVersion = 3;
-    data.clientID.cstring = "NUCLEO-L476RG-64";
+    data.clientID.cstring = "NUCLEO-L476RG-101";
     // Connect the 
     int rc = 0;
     if ((rc = client.connect(data)) != 0)
@@ -157,6 +159,8 @@ int main()
         myOled.display();
         thread_sleep_for(BLINKING_RATE_MS);
         myOled.clearDisplay();
+
+        wait_ms(500);
     }
 }
 
