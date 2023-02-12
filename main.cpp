@@ -159,7 +159,7 @@ int main()
         myOled.setTextSize(2);
         myOled.setTextColor(WHITE);
         myOled.setTextCursor(0,0);
-        myOled.printf("Hello");
+        myOled.printf("Hi");
         myOled.display();
         thread_sleep_for(BLINKING_RATE_MS);
         myOled.clearDisplay();
