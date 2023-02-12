@@ -1,4 +1,11 @@
-.build
-.mbed
-projectfiles
-*.py*
+BUILD
+?mbed
+compile_commands?json
+?clangd
+?cache
+19E042PIM_MB_PINS
+Adafruit_GFX
+MAX44000
+mbed-mqtt
+mbed-os
+MQTT

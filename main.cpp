@@ -44,6 +44,7 @@ InterruptIn sw1(MB_SW1);
 DigitalOut led1(MB_LED1);
 // Right LED on the motherboard:
 DigitalOut led2(MB_LED2);
+
 // Pointer to a WiFi network object:
 WiFiInterface *wifi;
 // Creating TCP socket: - not in use
@@ -60,12 +61,15 @@ char* topic_sub = "test/Olja/Pot1";
 char* topic_sub_notifications = "agriculture/display";
 // Counter of arrived messages:
 int arrivedcount = 0;
+
 // Flag indicating that button is not pressed:
 int button_pressed = 0;
+
 // HiveMQ broker connectivity information:
 const char* hostname = "broker.hivemq.com";
 int port = 1883;
 // Returning a string for a provided network encryption: 
+
  
  
 //Global Functions
@@ -155,7 +159,7 @@ int main()
         myOled.setTextSize(2);
         myOled.setTextColor(WHITE);
         myOled.setTextCursor(0,0);
-        myOled.printf("Hello,    Olja!");
+        myOled.printf("Hello");
         myOled.display();
         thread_sleep_for(BLINKING_RATE_MS);
         myOled.clearDisplay();
